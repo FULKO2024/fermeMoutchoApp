@@ -97,35 +97,6 @@ workflows:
           cd ios/App
           pod install --repo-update
           
-      - name: Configure iOS signing
-        script: |
-          #!/usr/bin/env sh
-          set -e
-          echo "Configuring iOS signing for automatic mode..."
-          
-          # Créer le fichier exportOptions.plist pour signing automatique
-          cat > exportOptions.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-          
-          echo "exportOptions.plist created successfully for automatic signing"
-          cat exportOptions.plist
-          
       - name: List iOS project structure
         script: |
           #!/usr/bin/env sh
@@ -135,11 +106,11 @@ workflows:
           echo "Xcode project files:"
           ls -la ios/App/*.xcodeproj/
           
-      - name: Build iOS IPA
+      - name: Build iOS Archive Only
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Starting iOS build with automatic signing..."
+          echo "Starting iOS archive build..."
           
           # Vérifier que le projet existe
           if [ ! -d "ios/App/App.xcworkspace" ]; then
@@ -148,7 +119,7 @@ workflows:
             exit 1
           fi
           
-          # Build avec signing automatique complet
+          # Build avec signing automatique
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
@@ -161,21 +132,13 @@ workflows:
                      DEVELOPMENT_TEAM="" \
                      PROVISIONING_PROFILE=""
           
-          echo "Archive created successfully with automatic signing"
-          
-          # Export IPA avec signing automatique
-          xcodebuild -exportArchive \
-                     -archivePath /tmp/App.xcarchive \
-                     -exportPath /tmp/App \
-                     -exportOptionsPlist exportOptions.plist \
-                     -verbose
-          
-          echo "IPA exported successfully"
+          echo "iOS Archive created successfully!"
+          echo "Note: IPA export requires development team configuration"
+          echo "Archive available at: /tmp/App.xcarchive"
           
     artifacts:
-      - /tmp/App/App.ipa
-      - /tmp/xcodebuild_logs/*.log
       - /tmp/App.xcarchive
+      - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_API_KEY
