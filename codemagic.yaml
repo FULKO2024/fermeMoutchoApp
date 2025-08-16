@@ -69,6 +69,8 @@ workflows:
           #!/usr/bin/env sh
           set -e
           echo "Setting up iOS environment..."
+          echo "Xcode version: $(xcodebuild -version)"
+          echo "Current directory: $(pwd)"
           
       - name: Install dependencies
         script: |
@@ -93,27 +95,54 @@ workflows:
           #!/usr/bin/env sh
           set -e
           cd ios/App
-          pod install
+          pod install --repo-update
+          
+      - name: List iOS project structure
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "iOS project structure:"
+          ls -la ios/App/
+          echo "Xcode project files:"
+          ls -la ios/App/*.xcodeproj/
           
       - name: Build iOS IPA
         script: |
           #!/usr/bin/env sh
           set -e
+          echo "Starting iOS build..."
+          
+          # Vérifier que le projet existe
+          if [ ! -d "ios/App/App.xcworkspace" ]; then
+            echo "Error: App.xcworkspace not found!"
+            ls -la ios/App/
+            exit 1
+          fi
+          
+          # Build avec plus de verbosité
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath /tmp/App.xcarchive \
-                     archive
+                     archive \
+                     -verbose
           
+          echo "Archive created successfully"
+          
+          # Export IPA
           xcodebuild -exportArchive \
                      -archivePath /tmp/App.xcarchive \
                      -exportPath /tmp/App \
-                     -exportOptionsPlist exportOptions.plist
+                     -exportOptionsPlist exportOptions.plist \
+                     -verbose
+          
+          echo "IPA exported successfully"
           
     artifacts:
       - /tmp/App/App.ipa
       - /tmp/xcodebuild_logs/*.log
+      - /tmp/App.xcarchive
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_API_KEY
