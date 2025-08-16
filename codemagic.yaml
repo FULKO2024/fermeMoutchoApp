@@ -8,8 +8,6 @@ workflows:
         - keystore_reference
       groups:
         - google_play
-      android_signing:
-        - google_play
     scripts:
       - name: Set up environment
         script: |
@@ -50,10 +48,12 @@ workflows:
       - flutter_drive.log
     publishing:
       google_play:
+        credentials: $GOOGLE_PLAY_CREDENTIALS
         track: internal
         submit_to_review: false
         release_notes:
-          - "Initial release of Ferme Moutcho app"
+          - language: "en-US"
+            text: "Initial release of Ferme Moutcho app"
 
   ios-workflow:
     name: iOS Build
