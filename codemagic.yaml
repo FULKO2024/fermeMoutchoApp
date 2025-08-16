@@ -58,7 +58,6 @@ workflows:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.fermemoutcho.app"
-        DEVELOPMENT_TEAM: "YOUR_TEAM_ID"
       xcode: latest
       cocoapods: default
       groups:
@@ -102,9 +101,9 @@ workflows:
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Configuring iOS signing..."
+          echo "Configuring iOS signing for automatic mode..."
           
-          # Créer le fichier exportOptions.plist dans le répertoire de travail
+          # Créer le fichier exportOptions.plist pour signing automatique
           cat > exportOptions.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -114,8 +113,6 @@ workflows:
               <string>development</string>
               <key>signingStyle</key>
               <string>automatic</string>
-              <key>teamID</key>
-              <string>YOUR_TEAM_ID</string>
               <key>stripSwiftSymbols</key>
               <true/>
               <key>uploadBitcode</key>
@@ -126,7 +123,7 @@ workflows:
           </plist>
           EOF
           
-          echo "exportOptions.plist created successfully"
+          echo "exportOptions.plist created successfully for automatic signing"
           cat exportOptions.plist
           
       - name: List iOS project structure
@@ -142,7 +139,7 @@ workflows:
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Starting iOS build..."
+          echo "Starting iOS build with automatic signing..."
           
           # Vérifier que le projet existe
           if [ ! -d "ios/App/App.xcworkspace" ]; then
@@ -151,7 +148,7 @@ workflows:
             exit 1
           fi
           
-          # Build avec équipe de développement
+          # Build avec signing automatique complet
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
@@ -160,12 +157,13 @@ workflows:
                      archive \
                      -verbose \
                      CODE_SIGN_STYLE=Automatic \
-                     DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-                     CODE_SIGN_IDENTITY=""
+                     CODE_SIGN_IDENTITY="" \
+                     DEVELOPMENT_TEAM="" \
+                     PROVISIONING_PROFILE=""
           
-          echo "Archive created successfully"
+          echo "Archive created successfully with automatic signing"
           
-          # Export IPA avec équipe configurée
+          # Export IPA avec signing automatique
           xcodebuild -exportArchive \
                      -archivePath /tmp/App.xcarchive \
                      -exportPath /tmp/App \
