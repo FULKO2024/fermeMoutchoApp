@@ -50,10 +50,6 @@ workflows:
       google_play:
         credentials: $GOOGLE_PLAY_CREDENTIALS
         track: internal
-        submit_to_review: false
-        release_notes:
-          - language: "en-US"
-            text: "Initial release of Ferme Moutcho app"
 
   ios-workflow:
     name: iOS Build
