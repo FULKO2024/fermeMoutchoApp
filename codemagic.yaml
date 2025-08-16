@@ -97,11 +97,11 @@ workflows:
           cd ios/App
           pod install --repo-update
           
-      - name: Configure iOS signing with team
+      - name: Configure iOS signing for automatic mode
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Configuring iOS signing with development team..."
+          echo "Configuring iOS signing for automatic mode..."
           
           # Vérifier que le Team ID est défini
           if [ -z "$DEVELOPMENT_TEAM" ]; then
@@ -112,7 +112,7 @@ workflows:
           
           echo "Using Development Team: $DEVELOPMENT_TEAM"
           
-          # Créer le fichier exportOptions.plist avec équipe de développement
+          # Créer le fichier exportOptions.plist pour signing automatique
           cat > exportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -148,11 +148,11 @@ workflows:
           echo "Xcode project files:"
           ls -la ios/App/*.xcodeproj/
           
-      - name: Build iOS Archive with team
+      - name: Build iOS Archive with automatic signing
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Starting iOS archive build with development team..."
+          echo "Starting iOS archive build with automatic signing..."
           
           # Vérifier que le projet existe
           if [ ! -d "ios/App/App.xcworkspace" ]; then
@@ -161,7 +161,7 @@ workflows:
             exit 1
           fi
           
-          # Build avec équipe de développement et mise à jour des profils
+          # Build avec signing automatique complet
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
@@ -170,32 +170,36 @@ workflows:
                      archive \
                      -verbose \
                      -allowProvisioningUpdates \
+                     -allowProvisioningDeviceRegistration \
                      CODE_SIGN_STYLE=Automatic \
-                     DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM"
+                     CODE_SIGN_IDENTITY="" \
+                     DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+                     PROVISIONING_PROFILE=""
           
-          echo "iOS Archive created successfully with team!"
+          echo "iOS Archive created successfully with automatic signing!"
           
-      - name: Export iOS IPA with team
+      - name: Export iOS IPA with automatic signing
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Exporting iOS IPA with development team..."
+          echo "Exporting iOS IPA with automatic signing..."
           
-          # Exporter avec équipe configurée
+          # Exporter avec signing automatique
           xcodebuild -exportArchive \
                      -archivePath /tmp/App.xcarchive \
                      -exportPath /tmp/App \
                      -exportOptionsPlist exportOptions.plist \
-                     -verbose
+                     -verbose \
+                     -allowProvisioningUpdates
           
           if [ -f "/tmp/App/App.ipa" ]; then
-            echo "✅ IPA exported successfully with development team!"
+            echo "✅ IPA exported successfully with automatic signing!"
             echo "IPA location: /tmp/App/App.ipa"
             echo "🎉 Your IPA is ready for installation!"
           else
-            echo "❌ IPA export failed even with team configuration"
-            echo "📦 Archive is still available for manual export"
-            echo "Archive location: /tmp/App.xcarchive"
+            echo "❌ IPA export failed, but archive is available"
+            echo "📦 Archive location: /tmp/App.xcarchive"
+            echo "💡 You can manually export IPA from Xcode using this archive"
           fi
           
     artifacts:
