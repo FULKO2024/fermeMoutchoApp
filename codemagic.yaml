@@ -190,7 +190,4 @@ workflows:
     artifacts:
       - /tmp/App/App.ipa
       - /tmp/App.xcarchive
-      - /tmp/xcodebuild_logs/*.log
-    publishing:
-      # Pas de publication automatique - juste génération de l'IPA
-      # Vous pourrez télécharger l'IPA et l'installer manuellement 
+      - /tmp/xcodebuild_logs/*.log 
