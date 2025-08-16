@@ -97,6 +97,37 @@ workflows:
           cd ios/App
           pod install --repo-update
           
+      - name: Configure iOS signing for Ad Hoc
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "Configuring iOS signing for Ad Hoc distribution..."
+          
+          # Créer le fichier exportOptions.plist pour distribution Ad Hoc
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>compileBitcode</key>
+              <false/>
+          </dict>
+          </plist>
+          EOF
+          
+          echo "exportOptions.plist created for Ad Hoc distribution"
+          cat exportOptions.plist
+          
       - name: List iOS project structure
         script: |
           #!/usr/bin/env sh
@@ -106,7 +137,7 @@ workflows:
           echo "Xcode project files:"
           ls -la ios/App/*.xcodeproj/
           
-      - name: Build iOS Archive Only
+      - name: Build iOS Archive
         script: |
           #!/usr/bin/env sh
           set -e
@@ -133,15 +164,33 @@ workflows:
                      PROVISIONING_PROFILE=""
           
           echo "iOS Archive created successfully!"
-          echo "Note: IPA export requires development team configuration"
-          echo "Archive available at: /tmp/App.xcarchive"
+          
+      - name: Export iOS IPA (Ad Hoc)
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "Exporting iOS IPA for Ad Hoc distribution..."
+          
+          # Essayer d'exporter avec signing automatique
+          xcodebuild -exportArchive \
+                     -archivePath /tmp/App.xcarchive \
+                     -exportPath /tmp/App \
+                     -exportOptionsPlist exportOptions.plist \
+                     -verbose
+          
+          if [ -f "/tmp/App/App.ipa" ]; then
+            echo "IPA exported successfully for Ad Hoc distribution!"
+            echo "IPA location: /tmp/App/App.ipa"
+          else
+            echo "IPA export failed, but archive is available"
+            echo "Archive location: /tmp/App.xcarchive"
+            echo "You can manually export IPA from Xcode using this archive"
+          fi
           
     artifacts:
+      - /tmp/App/App.ipa
       - /tmp/App.xcarchive
       - /tmp/xcodebuild_logs/*.log
     publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_API_KEY
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true 
+      # Pas de publication automatique - juste génération de l'IPA
+      # Vous pourrez télécharger l'IPA et l'installer manuellement 
