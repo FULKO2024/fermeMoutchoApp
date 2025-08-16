@@ -58,10 +58,10 @@ workflows:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.fermemoutcho.app"
-        DEVELOPMENT_TEAM: "YOUR_TEAM_ID_HERE"
       xcode: latest
       cocoapods: default
       groups:
+        - ios_signing
         - app_store_credentials
         - code_signing
     scripts:
@@ -104,6 +104,15 @@ workflows:
           #!/usr/bin/env sh
           set -e
           echo "Configuring iOS signing with development team..."
+          
+          # Vérifier que le Team ID est défini
+          if [ -z "$DEVELOPMENT_TEAM" ]; then
+            echo "❌ Error: DEVELOPMENT_TEAM variable is not set!"
+            echo "Please configure the ios_signing variable group in CodeMagic"
+            exit 1
+          fi
+          
+          echo "Using Development Team: $DEVELOPMENT_TEAM"
           
           # Créer le fichier exportOptions.plist avec équipe de développement
           cat > exportOptions.plist << EOF
