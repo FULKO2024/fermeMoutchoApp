@@ -97,6 +97,18 @@ workflows:
           cd ios/App
           pod install --repo-update
           
+      - name: Configure iOS signing
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "Configuring iOS signing..."
+          
+          # Utiliser le signing automatique de CodeMagic
+          /usr/libexec/PlistBuddy -c "Set :method development" exportOptions.plist
+          /usr/libexec/PlistBuddy -c "Set :signingStyle automatic" exportOptions.plist
+          
+          echo "Signing configured for automatic mode"
+          
       - name: List iOS project structure
         script: |
           #!/usr/bin/env sh
@@ -119,14 +131,17 @@ workflows:
             exit 1
           fi
           
-          # Build avec plus de verbosité
+          # Build avec plus de verbosité et signing automatique
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath /tmp/App.xcarchive \
                      archive \
-                     -verbose
+                     -verbose \
+                     CODE_SIGN_STYLE=Automatic \
+                     DEVELOPMENT_TEAM="" \
+                     CODE_SIGN_IDENTITY=""
           
           echo "Archive created successfully"
           
