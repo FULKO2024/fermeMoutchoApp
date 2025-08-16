@@ -103,11 +103,28 @@ workflows:
           set -e
           echo "Configuring iOS signing..."
           
-          # Utiliser le signing automatique de CodeMagic
-          /usr/libexec/PlistBuddy -c "Set :method development" exportOptions.plist
-          /usr/libexec/PlistBuddy -c "Set :signingStyle automatic" exportOptions.plist
+          # Créer le fichier exportOptions.plist dans le répertoire de travail
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
           
-          echo "Signing configured for automatic mode"
+          echo "exportOptions.plist created successfully"
+          cat exportOptions.plist
           
       - name: List iOS project structure
         script: |
