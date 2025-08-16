@@ -161,7 +161,7 @@ workflows:
             exit 1
           fi
           
-          # Build avec équipe de développement
+          # Build avec équipe de développement et mise à jour des profils
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
@@ -169,6 +169,7 @@ workflows:
                      -archivePath /tmp/App.xcarchive \
                      archive \
                      -verbose \
+                     -allowProvisioningUpdates \
                      CODE_SIGN_STYLE=Automatic \
                      DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM"
           
