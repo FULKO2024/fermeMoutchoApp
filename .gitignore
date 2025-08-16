@@ -47,5 +47,4 @@ coverage/
 .env.production.local
 
 # CodeMagic
-codemagic.yaml
 exportOptions.plist 

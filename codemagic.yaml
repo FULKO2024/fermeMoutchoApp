@@ -1,0 +1,126 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    environment:
+      vars:
+        PACKAGE_NAME: "com.fermemoutcho.app"
+      android_signing:
+        - keystore_reference
+      groups:
+        - google_play
+      android_signing:
+        - google_play
+    scripts:
+      - name: Set up environment
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "Setting up environment..."
+          
+      - name: Install dependencies
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npm ci
+          
+      - name: Add Android platform
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npx cap add android
+          
+      - name: Sync project
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npx cap sync android
+          
+      - name: Build Android App Bundle
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          cd android
+          ./gradlew bundleRelease
+          
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/*.apk
+      - android/app/build/outputs/**/mapping.txt
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      google_play:
+        track: internal
+        submit_to_review: false
+        release_notes:
+          - "Initial release of Ferme Moutcho app"
+
+  ios-workflow:
+    name: iOS Build
+    environment:
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.fermemoutcho.app"
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_store_credentials
+        - code_signing
+    scripts:
+      - name: Set up environment
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo "Setting up iOS environment..."
+          
+      - name: Install dependencies
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npm ci
+          
+      - name: Add iOS platform
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npx cap add ios
+          
+      - name: Sync project
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          npx cap sync ios
+          
+      - name: Install CocoaPods
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          cd ios/App
+          pod install
+          
+      - name: Build iOS IPA
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          xcodebuild -workspace ios/App/App.xcworkspace \
+                     -scheme App \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath /tmp/App.xcarchive \
+                     archive
+          
+          xcodebuild -exportArchive \
+                     -archivePath /tmp/App.xcarchive \
+                     -exportPath /tmp/App \
+                     -exportOptionsPlist exportOptions.plist
+          
+    artifacts:
+      - /tmp/App/App.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_API_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true 
