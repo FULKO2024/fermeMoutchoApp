@@ -58,6 +58,7 @@ workflows:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.fermemoutcho.app"
+        DEVELOPMENT_TEAM: "YOUR_TEAM_ID_HERE"
       xcode: latest
       cocoapods: default
       groups:
@@ -71,6 +72,7 @@ workflows:
           echo "Setting up iOS environment..."
           echo "Xcode version: $(xcodebuild -version)"
           echo "Current directory: $(pwd)"
+          echo "Development Team: $DEVELOPMENT_TEAM"
           
       - name: Install dependencies
         script: |
@@ -97,14 +99,14 @@ workflows:
           cd ios/App
           pod install --repo-update
           
-      - name: Configure iOS signing for development
+      - name: Configure iOS signing with team
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Configuring iOS signing for development distribution..."
+          echo "Configuring iOS signing with development team..."
           
-          # Créer le fichier exportOptions.plist avec la méthode recommandée
-          cat > exportOptions.plist << 'EOF'
+          # Créer le fichier exportOptions.plist avec équipe de développement
+          cat > exportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -113,6 +115,8 @@ workflows:
               <string>development</string>
               <key>signingStyle</key>
               <string>automatic</string>
+              <key>teamID</key>
+              <string>$DEVELOPMENT_TEAM</string>
               <key>stripSwiftSymbols</key>
               <true/>
               <key>uploadBitcode</key>
@@ -125,7 +129,7 @@ workflows:
           </plist>
           EOF
           
-          echo "exportOptions.plist created for development distribution"
+          echo "exportOptions.plist created with team ID: $DEVELOPMENT_TEAM"
           cat exportOptions.plist
           
       - name: List iOS project structure
@@ -137,11 +141,11 @@ workflows:
           echo "Xcode project files:"
           ls -la ios/App/*.xcodeproj/
           
-      - name: Build iOS Archive
+      - name: Build iOS Archive with team
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Starting iOS archive build..."
+          echo "Starting iOS archive build with development team..."
           
           # Vérifier que le projet existe
           if [ ! -d "ios/App/App.xcworkspace" ]; then
@@ -150,7 +154,7 @@ workflows:
             exit 1
           fi
           
-          # Build avec signing automatique
+          # Build avec équipe de développement
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
@@ -159,37 +163,31 @@ workflows:
                      archive \
                      -verbose \
                      CODE_SIGN_STYLE=Automatic \
-                     CODE_SIGN_IDENTITY="" \
-                     DEVELOPMENT_TEAM="" \
-                     PROVISIONING_PROFILE=""
+                     DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM"
           
-          echo "iOS Archive created successfully!"
+          echo "iOS Archive created successfully with team!"
           
-      - name: Export iOS IPA (Development)
+      - name: Export iOS IPA with team
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Attempting to export iOS IPA for development distribution..."
+          echo "Exporting iOS IPA with development team..."
           
-          # Essayer d'exporter avec signing automatique
-          if xcodebuild -exportArchive \
-                        -archivePath /tmp/App.xcarchive \
-                        -exportPath /tmp/App \
-                        -exportOptionsPlist exportOptions.plist \
-                        -verbose; then
-            echo "✅ IPA exported successfully for development distribution!"
+          # Exporter avec équipe configurée
+          xcodebuild -exportArchive \
+                     -archivePath /tmp/App.xcarchive \
+                     -exportPath /tmp/App \
+                     -exportOptionsPlist exportOptions.plist \
+                     -verbose
+          
+          if [ -f "/tmp/App/App.ipa" ]; then
+            echo "✅ IPA exported successfully with development team!"
             echo "IPA location: /tmp/App/App.ipa"
+            echo "🎉 Your IPA is ready for installation!"
           else
-            echo "⚠️ IPA export failed, but this is expected without proper signing"
+            echo "❌ IPA export failed even with team configuration"
             echo "📦 Archive is still available for manual export"
             echo "Archive location: /tmp/App.xcarchive"
-            echo ""
-            echo "💡 To get an IPA, you can:"
-            echo "1. Download the .xcarchive file from this build"
-            echo "2. Open it in Xcode on a Mac"
-            echo "3. Export as IPA with your development team"
-            echo ""
-            echo "🎯 For now, the build is considered successful with the archive"
           fi
           
     artifacts:
