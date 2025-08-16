@@ -176,30 +176,36 @@ workflows:
                      DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
                      PROVISIONING_PROFILE=""
           
-          echo "iOS Archive created successfully with automatic signing!"
+          echo "✅ iOS Archive created successfully with automatic signing!"
+          echo "📦 Archive location: /tmp/App.xcarchive"
           
-      - name: Export iOS IPA with automatic signing
+      - name: Attempt IPA export (optional)
         script: |
           #!/usr/bin/env sh
           set -e
-          echo "Exporting iOS IPA with automatic signing..."
+          echo "Attempting to export iOS IPA (this may fail without proper Apple account integration)..."
           
-          # Exporter avec signing automatique
-          xcodebuild -exportArchive \
-                     -archivePath /tmp/App.xcarchive \
-                     -exportPath /tmp/App \
-                     -exportOptionsPlist exportOptions.plist \
-                     -verbose \
-                     -allowProvisioningUpdates
-          
-          if [ -f "/tmp/App/App.ipa" ]; then
-            echo "✅ IPA exported successfully with automatic signing!"
+          # Essayer d'exporter l'IPA (peut échouer)
+          if xcodebuild -exportArchive \
+                        -archivePath /tmp/App.xcarchive \
+                        -exportPath /tmp/App \
+                        -exportOptionsPlist exportOptions.plist \
+                        -verbose \
+                        -allowProvisioningUpdates; then
+            echo "🎉 IPA exported successfully!"
             echo "IPA location: /tmp/App/App.ipa"
-            echo "🎉 Your IPA is ready for installation!"
           else
-            echo "❌ IPA export failed, but archive is available"
-            echo "📦 Archive location: /tmp/App.xcarchive"
-            echo "💡 You can manually export IPA from Xcode using this archive"
+            echo "⚠️ IPA export failed (expected without Apple account integration)"
+            echo "📦 But your archive is ready for manual export!"
+            echo ""
+            echo "💡 To get your IPA:"
+            echo "1. Download the .xcarchive file from this build"
+            echo "2. Open it in Xcode on a Mac"
+            echo "3. Go to Window → Organizer"
+            echo "4. Select your archive and click 'Distribute App'"
+            echo "5. Choose 'Development' and follow the steps"
+            echo ""
+            echo "🎯 Your iOS app is successfully built and archived!"
           fi
           
     artifacts:
